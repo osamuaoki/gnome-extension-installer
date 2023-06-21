@@ -1,0 +1,6 @@
+# Broken install on 43
+# https://github.com/kgshank/gse-sound-output-device-chooser/issues/265
+# New 43 UI is sufficient without this
+URL="https://github.com/kgshank/gse-sound-output-device-chooser.git"
+UUID="sound-output-device-chooser@kgshank.net"
+SCRIPT="ln -sf ${DIR_GITREPO}/${NAME}/${UUID} ${DIR_EXTENSIONS}/${UUID}"

@@ -1,0 +1,3 @@
+URL="https://gitlab.com/skrewball/openweather.git"
+UUID="openweather-extension@jenslody.de"
+SCRIPT="make install"

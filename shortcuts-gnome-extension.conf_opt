@@ -1,0 +1,3 @@
+URL="https://gitlab.com/paddatrapper/shortcuts-gnome-extension"
+UUID='$(cat src/metadata.json | jq -r .uuid)'
+SCRIPT="./install.sh local-install"

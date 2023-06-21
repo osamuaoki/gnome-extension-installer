@@ -1,0 +1,4 @@
+# Similar functionality with maure design is available as dash-to-dock
+URL="https://github.com/icedman/dash2dock-lite.git"
+UUID="dash2dock-lite@icedman.github.com"
+SCRIPT="make install"

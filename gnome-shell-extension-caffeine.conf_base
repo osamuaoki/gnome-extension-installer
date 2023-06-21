@@ -1,0 +1,4 @@
+URL="https://github.com/eonpatapon/gnome-shell-extension-caffeine.git"
+UUID="caffeine@patapon.info"
+#SCRIPT="ln -sf ${DIR_GITREPO}/${NAME}/${UUID} ${DIR_EXTENSIONS}/${UUID}"
+SCRIPT="make all"

@@ -1,0 +1,3 @@
+URL="https://gitlab.gnome.org/jrahmatzadeh/just-perfection.git"
+UUID='$(cat src/metadata.json | jq -r .uuid)'
+SCRIPT="set -x; cd scripts ;./build.sh -i"

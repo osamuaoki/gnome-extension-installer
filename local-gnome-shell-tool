@@ -1,0 +1,97 @@
+#!/bin/bash -e
+# vim:se sw=2 ts=2 sts=2 et ai tw=78:
+DIR_GNOMESHELL="$HOME/.local/share/gnome-shell"
+DIR_EXTENSIONS="$DIR_GNOMESHELL/extensions"
+DIR_GITREPO="$DIR_GNOMESHELL/gitrepo"
+case "$1" in
+  "-e")
+    rm -rf "${DIR_EXTENSIONS}"
+    echo "Refresh with essential GNOME extensions only"
+    for f in *.conf; do
+      ${0} $f
+    done
+    exit 0
+    ;;
+  "-b")
+    rm -rf "${DIR_EXTENSIONS}"
+    echo "Refresh with basic (essential+basic) GNOME extensions"
+    for f in *.conf; do
+      ${0} $f
+    done
+    for f in *.conf_base; do
+      ${0} $f
+    done
+    exit 0
+    ;;
+  "-o")
+    rm -rf "${DIR_EXTENSIONS}"
+    echo "Refresh with essential+base+optional GNOME extensions"
+    for f in *.conf; do
+      ${0} $f
+    done
+    for f in *.conf_base; do
+      ${0} $f
+    done
+    for f in *.conf_opt; do
+      ${0} $f
+    done
+    exit 0
+    ;;
+  "-a")
+    rm -rf "${DIR_EXTENSIONS}"
+    echo "Refresh with all (essential+base+optional+extra) GNOME extensions"
+    for f in *.conf; do
+      ${0} $f
+    done
+    for f in *.conf_base; do
+      ${0} $f
+    done
+    for f in *.conf_opt; do
+      ${0} $f
+    done
+    for f in *.conf_ext; do
+      ${0} $f
+    done
+    exit 0
+    ;;
+esac
+CONF="${1}"
+NAME="${CONF%%.conf*}"
+mkdir -p "${DIR_EXTENSIONS}"
+if [ -z "$NAME" ]; then
+  echo "E: no arguments set"
+  exit 1
+fi
+shift
+COMMAND="$1"
+CWD="$(pwd)"
+. ${CWD}/${CONF}
+# UUID may be ""
+if [ -n "${UUID}" ]; then
+  rm -rf ${DIR_EXTENSIONS}/${UUID}
+fi
+if [ "${COMMAND#r}" != "${COMMAND}" ]; then
+  # if COMMAND starts with "r"
+  echo "I: UUID='${UUID}' for ${NAME} removed"
+  exit 0
+fi
+# update local git clone
+if [ -d "${DIR_GITREPO}/${NAME}" ] && \
+    [ -d "${DIR_GITREPO}/${NAME}/.git" ]; then
+  cd "${DIR_GITREPO}/${NAME}"
+  git reset --hard HEAD
+  git clean -d -f -x
+  git pull
+else
+  cd "${DIR_GITREPO}"
+  rm -rf "${DIR_GITREPO}/${NAME}"
+  eval "git clone ${URL}"
+  cd "${NAME}"
+fi
+# install
+echo "I: UUID='${UUID}' for ${NAME} installed"
+if [ -n "${UUID}" ] && [ -n "${SCRIPT}" ] ; then
+  set -x
+  eval $SCRIPT
+fi
+
