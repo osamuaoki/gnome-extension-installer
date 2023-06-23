@@ -4,52 +4,34 @@ DIR_GNOMESHELL="$HOME/.local/share/gnome-shell"
 DIR_EXTENSIONS="$DIR_GNOMESHELL/extensions"
 DIR_GITREPO="$DIR_GNOMESHELL/gitrepo"
 case "$1" in
-  "-e")
+  "-a"|"-4")
     rm -rf "${DIR_EXTENSIONS}"
-    echo "Refresh with essential GNOME extensions only"
-    for f in *.conf; do
+    echo "Refresh with all (1:essential+2:base+3:optional+4:extra) GNOME extensions"
+    for f in 1_*.conf 2_*.conf 3_*.conf 4_*.conf; do
       ${0} $f
     done
     exit 0
     ;;
-  "-b")
+  "-o"|"-3"|"--"|"")
     rm -rf "${DIR_EXTENSIONS}"
-    echo "Refresh with basic (essential+basic) GNOME extensions"
-    for f in *.conf; do
-      ${0} $f
-    done
-    for f in *.conf_base; do
+    echo "Refresh with 1:essential+2:basic+3:optional GNOME extensions"
+    for f in 1_*.conf 2_*.conf 3_*.conf; do
       ${0} $f
     done
     exit 0
     ;;
-  "-o")
+  "-b"|"-2")
     rm -rf "${DIR_EXTENSIONS}"
-    echo "Refresh with essential+base+optional GNOME extensions"
-    for f in *.conf; do
-      ${0} $f
-    done
-    for f in *.conf_base; do
-      ${0} $f
-    done
-    for f in *.conf_opt; do
+    echo "Refresh with 1:essential+2:basic GNOME extensions"
+    for f in 1_*.conf 2_*.conf; do
       ${0} $f
     done
     exit 0
     ;;
-  "-a")
+  "-e"|"-1")
     rm -rf "${DIR_EXTENSIONS}"
-    echo "Refresh with all (essential+base+optional+extra) GNOME extensions"
-    for f in *.conf; do
-      ${0} $f
-    done
-    for f in *.conf_base; do
-      ${0} $f
-    done
-    for f in *.conf_opt; do
-      ${0} $f
-    done
-    for f in *.conf_ext; do
+    echo "Refresh with 1:essential GNOME extensions only"
+    for f in 1_*.conf; do
       ${0} $f
     done
     exit 0
@@ -57,6 +39,7 @@ case "$1" in
 esac
 CONF="${1}"
 NAME="${CONF%%.conf*}"
+NAME="${NAME#?_}"
 mkdir -p "${DIR_EXTENSIONS}"
 if [ -z "$NAME" ]; then
   echo "E: no arguments set"
