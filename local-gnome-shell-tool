@@ -1,14 +1,82 @@
 #!/bin/bash -e
 # vim:se sw=2 ts=2 sts=2 et ai tw=78:
+set -x
 DIR_GNOMESHELL="$HOME/.local/share/gnome-shell"
 DIR_EXTENSIONS="$DIR_GNOMESHELL/extensions"
-DIR_GITREPO="$DIR_GNOMESHELL/gitrepo"
+DIR_GITREPO="$(pwd)/gitrepo"
+
+name_extension () {
+  CONF="${1}"
+  NAME="${CONF%%.conf*}"
+  NAME="${NAME#?_}"
+  if [ -z "$NAME" ]; then
+    echo "E: no arguments set" >&2
+    exit 1
+  fi
+  echo "$NAME"
+}
+
+remove_extension () {
+  CONF="${1}"
+  NAME="$(name_extension "$CONF")"
+  CWD="$(pwd)"
+  . ${CWD}/${CONF}
+  # remove gitrepo
+  rm -rf "${DIR_GITREPO}/${NAME}"
+  # remove extension
+  if [ -d "${DIR_EXTENSIONS}" ]; then
+    rm -rf ${DIR_EXTENSIONS}/${UUID}
+  fi
+}
+
+download_extension () {
+  CONF="${1}"
+  NAME="$(name_extension "$CONF")"
+  CWD="$(pwd)"
+  . ${CWD}/${CONF}
+  # UUID may be ""
+  # update local git clone
+  mkdir -p "${DIR_GITREPO}"
+  if [ -d "${DIR_GITREPO}/${NAME}" ] && \
+      [ -d "${DIR_GITREPO}/${NAME}/.git" ]; then
+    cd "${DIR_GITREPO}/${NAME}"
+    git reset --hard HEAD
+    git clean -d -f -x
+    git pull
+  else
+    cd "${DIR_GITREPO}"
+    rm -rf "${DIR_GITREPO}/${NAME}"
+    eval "git clone ${URL}"
+  fi
+  cd "${CWD}"
+}
+
+install_extension () {
+  CONF="${1}"
+  NAME="$(name_extension "$CONF")"
+  CWD="$(pwd)"
+  . ${CWD}/${CONF}
+  download_extension "$CONF"
+  # UUID may be ""
+  mkdir -p "${DIR_EXTENSIONS}"
+  if [ -n "${UUID}" ]; then
+    rm -rf ${DIR_EXTENSIONS}/${UUID}
+    # install
+    echo "I: UUID='${UUID}' for ${NAME} installed"
+    if [ -n "${SCRIPT}" ] ; then
+      cd "${DIR_GITREPO}/${NAME}"
+      set -x
+      eval $SCRIPT
+      cd "${CWD}"
+    fi
+  fi
+}
 case "$1" in
   "-a"|"-4")
     rm -rf "${DIR_EXTENSIONS}"
     echo "Refresh with all (1:essential+2:base+3:optional+4:extra) GNOME extensions"
     for f in 1_*.conf 2_*.conf 3_*.conf 4_*.conf; do
-      ${0} $f
+      install_extension $f
     done
     exit 0
     ;;
@@ -16,7 +84,7 @@ case "$1" in
     rm -rf "${DIR_EXTENSIONS}"
     echo "Refresh with 1:essential+2:basic+3:optional GNOME extensions"
     for f in 1_*.conf 2_*.conf 3_*.conf; do
-      ${0} $f
+      install_extension $f
     done
     exit 0
     ;;
@@ -24,7 +92,7 @@ case "$1" in
     rm -rf "${DIR_EXTENSIONS}"
     echo "Refresh with 1:essential+2:basic GNOME extensions"
     for f in 1_*.conf 2_*.conf; do
-      ${0} $f
+      install_extension $f
     done
     exit 0
     ;;
@@ -32,49 +100,26 @@ case "$1" in
     rm -rf "${DIR_EXTENSIONS}"
     echo "Refresh with 1:essential GNOME extensions only"
     for f in 1_*.conf; do
-      ${0} $f
+      install_extension $f
+    done
+    exit 0
+    ;;
+  "-z")
+    rm -rf "${DIR_EXTENSIONS}"
+    echo "Download GNOME extensions ALL"
+    for f in 1_*.conf 2_*.conf 3_*.conf 4_*.conf Z_*.conf; do
+      download_extension $f
+    done
+    exit 0
+    ;;
+  "-r")
+    shift
+    echo "Remove installed GNOME extensions"
+    for f in "$@"; do
+      remove_extension "$f"
     done
     exit 0
     ;;
 esac
-CONF="${1}"
-NAME="${CONF%%.conf*}"
-NAME="${NAME#?_}"
-mkdir -p "${DIR_EXTENSIONS}"
-if [ -z "$NAME" ]; then
-  echo "E: no arguments set"
-  exit 1
-fi
-shift
-COMMAND="$1"
-CWD="$(pwd)"
-. ${CWD}/${CONF}
-# UUID may be ""
-if [ -n "${UUID}" ]; then
-  rm -rf ${DIR_EXTENSIONS}/${UUID}
-fi
-if [ "${COMMAND#r}" != "${COMMAND}" ]; then
-  # if COMMAND starts with "r"
-  echo "I: UUID='${UUID}' for ${NAME} removed"
-  exit 0
-fi
-# update local git clone
-if [ -d "${DIR_GITREPO}/${NAME}" ] && \
-    [ -d "${DIR_GITREPO}/${NAME}/.git" ]; then
-  cd "${DIR_GITREPO}/${NAME}"
-  git reset --hard HEAD
-  git clean -d -f -x
-  git pull
-else
-  cd "${DIR_GITREPO}"
-  rm -rf "${DIR_GITREPO}/${NAME}"
-  eval "git clone ${URL}"
-  cd "${NAME}"
-fi
-# install
-echo "I: UUID='${UUID}' for ${NAME} installed"
-if [ -n "${UUID}" ] && [ -n "${SCRIPT}" ] ; then
-  set -x
-  eval $SCRIPT
-fi
+install_extension "${1}"
 
